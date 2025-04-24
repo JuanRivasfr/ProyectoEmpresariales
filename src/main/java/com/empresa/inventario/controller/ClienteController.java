@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.empresa.inventario.model.Categoria;
 import com.empresa.inventario.model.Cliente;
 import com.empresa.inventario.service.ClienteService;
 
@@ -37,6 +38,12 @@ public class ClienteController {
     public ResponseEntity<Void> eliminarCliente(@PathVariable Long id) {
         clienteService.eliminarCliente(id);
         return ResponseEntity.noContent().build();
+    }
+    
+    @PutMapping("/{id}")
+    public Cliente actualizarcliente(@PathVariable Long id, @RequestBody Cliente cliente) {
+    	cliente.setId(id);
+        return clienteService.guardarCliente(cliente);
     }
 }
 

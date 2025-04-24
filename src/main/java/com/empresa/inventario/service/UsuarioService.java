@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.empresa.inventario.model.Usuario;
 import com.empresa.inventario.repository.UsuarioRepository;
+import com.empresa.inventario.util.PasswordEncoderUtil;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,7 +23,10 @@ public class UsuarioService {
     }
 
     public Usuario guardarUsuario(Usuario usuario) {
-        // Guardar sin encriptar
+        // Encriptar contraseña antes de guardar
+        if (usuario.getPassword() != null) {
+            usuario.setPassword(PasswordEncoderUtil.encriptar(usuario.getPassword()));
+        }
         return usuarioRepository.save(usuario);
     }
 

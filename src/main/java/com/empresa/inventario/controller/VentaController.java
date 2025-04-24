@@ -29,8 +29,8 @@ public class VentaController {
     }
 
     @PostMapping
-    public Venta crearVenta(@RequestBody Venta venta) {
-        return ventaService.guardarVenta(venta);
+    public ResponseEntity<Venta> crearVenta(@RequestBody Venta venta) {
+        return ResponseEntity.ok(ventaService.guardarVenta(venta));
     }
 
     @DeleteMapping("/{id}")

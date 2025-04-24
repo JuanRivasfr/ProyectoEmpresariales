@@ -1,17 +1,21 @@
 package com.empresa.inventario.model;
 
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "DetalleVenta")
+@Table(name = "detalleventa")
 public class DetalleVenta {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "venta_id", nullable = false)
+    @JsonBackReference
     private Venta venta;
 
     @ManyToOne

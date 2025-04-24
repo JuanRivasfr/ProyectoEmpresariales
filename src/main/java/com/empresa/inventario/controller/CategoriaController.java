@@ -38,5 +38,11 @@ public class CategoriaController {
         categoriaService.eliminarCategoria(id);
         return ResponseEntity.noContent().build();
     }
+    
+    @PutMapping("/{id}")
+    public Categoria actualizar(@PathVariable Long id, @RequestBody Categoria categoria) {
+        categoria.setId(id);
+        return categoriaService.guardarCategoria(categoria);
+    }
 }
 

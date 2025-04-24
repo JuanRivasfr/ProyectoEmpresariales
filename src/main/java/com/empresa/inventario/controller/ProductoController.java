@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.empresa.inventario.model.Categoria;
 import com.empresa.inventario.model.Producto;
 import com.empresa.inventario.service.ProductoService;
 
@@ -37,5 +38,11 @@ public class ProductoController {
     public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
         productoService.eliminarProducto(id);
         return ResponseEntity.noContent().build();
+    }
+    
+    @PutMapping("/{id}")
+    public Producto actualizarProducto(@PathVariable Long id, @RequestBody Producto producto) {
+    	producto.setId(id);
+        return productoService.guardarProducto(producto);
     }
 }
