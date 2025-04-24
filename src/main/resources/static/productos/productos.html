@@ -22,6 +22,11 @@
   <div class="col-md-2">
     <input type="number" class="form-control" id="stock" placeholder="Stock" required>
   </div>
+  <div class="col-md-4">
+    <select class="form-select" id="proveedor" required>
+      <option value="">Seleccione Proveedor</option>
+    </select>
+  </div>
   <div class="col-md-12">
     <button type="submit" class="btn btn-primary">Registrar Producto</button>
   </div>
@@ -35,6 +40,7 @@
       <th>Descripción</th>
       <th>Precio</th>
       <th>Stock</th>
+      <th>Proveedor</th>
       <th>Acciones</th>
     </tr>
   </thead>
@@ -43,6 +49,7 @@
 
 <script>
 const api = 'http://localhost:8080/api/productos';
+const apiProveedores = 'http://localhost:8080/api/proveedores';
 const token = localStorage.getItem("jwt");
 
 function obtenerRolDesdeToken() {
@@ -53,6 +60,20 @@ function obtenerRolDesdeToken() {
 }
 
 const rol = obtenerRolDesdeToken();
+
+async function cargarProveedores() {
+  const res = await fetch(apiProveedores, {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  const data = await res.json();
+  const select = document.getElementById("proveedor");
+  data.forEach(p => {
+    const option = document.createElement("option");
+    option.value = p.id;
+    option.textContent = p.nombre;
+    select.appendChild(option);
+  });
+}
 
 async function cargarProductos() {
   const res = await fetch(api, {
@@ -72,6 +93,7 @@ async function cargarProductos() {
       <td>${p.descripcion}</td>
       <td>${p.precio}</td>
       <td>${p.stock}</td>
+      <td>${p.proveedor ? p.proveedor.nombre : 'N/A'}</td>
       <td>
         ${rol === 'ADMINISTRADOR' ? `<button class='btn btn-sm btn-warning' onclick="editar(${p.id})">Editar</button>` : ''}
         ${rol === 'ADMINISTRADOR' ? `<button class='btn btn-sm btn-danger' onclick="eliminar(${p.id})">Eliminar</button>` : ''}
@@ -101,7 +123,8 @@ form.addEventListener("submit", async (e) => {
     nombre: form.nombre.value,
     descripcion: form.descripcion.value,
     precio: parseFloat(form.precio.value),
-    stock: parseInt(form.stock.value)
+    stock: parseInt(form.stock.value),
+    proveedor: { id: parseInt(form.proveedor.value) }
   };
 
   await fetch(api, {
@@ -117,6 +140,7 @@ form.addEventListener("submit", async (e) => {
   cargarProductos();
 });
 
+cargarProveedores();
 cargarProductos();
 </script>
 <script>
