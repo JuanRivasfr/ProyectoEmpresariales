@@ -227,14 +227,6 @@
       });
     }
 
-    async function eliminarVenta(id) {
-      if (!confirm("¿Eliminar esta venta?")) return;
-      await fetch(`${apiVentas}/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + token }
-      });
-      cargarVentas();
-    }
     function verDetalle(id) {
     	  window.location.href = `verdetalleventa.html?id=${id}`;
     	}

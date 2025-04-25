@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.empresa.inventario.model.Producto;
 import com.empresa.inventario.model.Proveedor;
 import com.empresa.inventario.service.ProveedorService;
 
@@ -37,6 +38,12 @@ public class ProveedorController {
     public ResponseEntity<Void> eliminarProveedor(@PathVariable Long id) {
         proveedorService.eliminarProveedor(id);
         return ResponseEntity.noContent().build();
+    }
+    
+    @PutMapping("/{id}")
+    public Proveedor actualizarProveedor(@PathVariable Long id, @RequestBody Proveedor proveedor) {
+    	proveedor.setId(id);
+        return proveedorService.guardarProveedor(proveedor);
     }
 }
 
