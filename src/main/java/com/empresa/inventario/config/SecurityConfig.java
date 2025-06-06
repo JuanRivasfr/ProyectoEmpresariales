@@ -14,6 +14,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 import java.util.List;
 
 @Configuration
@@ -39,39 +42,53 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtRequestFilter jwtFilter) throws Exception {
-        http.csrf().disable()
+        http.cors().and().csrf().disable()
             .authorizeHttpRequests(auth -> auth
-            		.requestMatchers(
-            				"/", 
-                            "/login.html", 
-                            "/menu.html",
-                            "/menu_admin.html",
-                            "/usuarios/usuarios.html",
-                            "/usuarios/editar.html",
-                            "/categorias/categorias.html",
-                            "/categorias/editar.html",
-                            "/clientes/clientes.html",
-                            "/clientes/editar.html",
-                            "/productos/productos.html",
-                            "/productos/editar.html",
-                            "/proveedores/proveedores.html",
-                            "/proveedores/editar.html",
-                            "/ventas/ventas.html",
-                            "/ventas/verdetalleventa.html",
-                            "/auth/login", 
-                            "/v3/api-docs/**",
-                            "/swagger-ui/**",
-                            "/swagger-ui.html",
-                            "/css/**",
-                            "/js/**",
-                            "/img/**"
-            			).permitAll()
-
+                .requestMatchers(
+                    "/", 
+                    "/login.html", 
+                    "/menu.html",
+                    "/menu_admin.html",
+                    "/usuarios/usuarios.html",
+                    "/usuarios/editar.html",
+                    "/categorias/categorias.html",
+                    "/categorias/editar.html",
+                    "/clientes/clientes.html",
+                    "/clientes/editar.html",
+                    "/productos/productos.html",
+                    "/productos/editar.html",
+                    "/proveedores/proveedores.html",
+                    "/proveedores/editar.html",
+                    "/ventas/ventas.html",
+                    "/ventas/verdetalleventa.html",
+                    "/ventas/ventas_realizadas.html",
+                    "/auth/login", 
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/css/**",
+                    "/js/**",
+                    "/img/**"
+                ).permitAll()
                 .requestMatchers("/api/**").authenticated()
             )
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                    .allowedOrigins("http://localhost:3000")
+                    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                    .allowedHeaders("*")
+                    .allowCredentials(true);
+            }
+        };
     }
 }

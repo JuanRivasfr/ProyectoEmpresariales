@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <title>Ventas</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .acciones button { margin-right: 5px; }
-    .table-sm td, .table-sm th { padding: .3rem; }
-  </style>
 </head>
 <body class="p-4">
   <div class="container">
@@ -16,9 +12,11 @@
 
     <form id="formVenta" class="mb-4">
       <div class="row g-3 mb-3">
-        <div class="col-md-6">
-          <label for="cliente" class="form-label">Cliente</label>
-          <select id="cliente" class="form-select" required></select>
+        <div class="col-md-6 position-relative">
+          <label for="clienteDocumento" class="form-label">Buscar Cliente por Documento</label>
+          <input type="text" id="clienteDocumento" class="form-control" placeholder="Número de documento" autocomplete="off">
+          <ul class="list-group position-absolute" id="sugerenciasCliente" style="z-index: 1000;"></ul>
+          <input type="hidden" id="clienteId">
         </div>
         <div class="col-md-6">
           <button type="button" onclick="agregarProducto()" class="btn btn-success mt-4">Agregar Producto</button>
@@ -44,28 +42,14 @@
 
       <button type="submit" class="btn btn-primary">Registrar Venta</button>
     </form>
-
-    <hr>
-    <h4>Ventas Realizadas</h4>
-    <table class="table table-bordered">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Fecha</th>
-          <th>Cliente</th>
-          <th>Total</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody id="tablaVentas"></tbody>
-    </table>
   </div>
 
   <script>
     const token = localStorage.getItem("jwt");
     const apiVentas = "http://localhost:8080/api/ventas";
     const apiClientes = "http://localhost:8080/api/clientes";
-    const apiProductos = "http://localhost:8080/api/productos";
+    const apiBuscarClientes = "http://localhost:8080/api/clientes/buscar";
+    const apiBuscarProductos = "http://localhost:8080/api/productos/buscar";
 
     function obtenerRolDesdeToken() {
       if (!token) return null;
@@ -78,94 +62,108 @@
       window.location.href = rol === 'ADMINISTRADOR' ? "/menu_admin.html" : "/menu.html";
     }
 
-    async function cargarClientes() {
-      const res = await fetch(apiClientes, {
+    document.getElementById("clienteDocumento").addEventListener("input", async function () {
+      const input = this.value;
+      const ul = document.getElementById("sugerenciasCliente");
+      if (input.length < 3) {
+        ul.innerHTML = '';
+        return;
+      }
+      const res = await fetch(`${apiBuscarClientes}?documento=${input}`, {
         headers: { 'Authorization': 'Bearer ' + token }
       });
-      const clientes = await res.json();
-      const select = document.getElementById("cliente");
-      clientes.forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c.id;
-        opt.textContent = c.nombre;
-        select.appendChild(opt);
+      const data = await res.json();
+      ul.innerHTML = '';
+      data.forEach(c => {
+        const li = document.createElement("li");
+        li.className = "list-group-item list-group-item-action";
+        li.textContent = `${c.nombre} (${c.numeroDocumento})`;
+        li.onclick = () => {
+          document.getElementById("clienteDocumento").value = `${c.nombre} (${c.numeroDocumento})`;
+          document.getElementById("clienteId").value = c.id;
+          ul.innerHTML = '';
+        };
+        ul.appendChild(li);
       });
-    }
-
-    let productosCache = [];
-
-    async function cargarProductos() {
-      const res = await fetch(apiProductos, {
-        headers: { 'Authorization': 'Bearer ' + token }
-      });
-      productosCache = await res.json();
-    }
+    });
 
     function agregarProducto() {
-    	  const tbody = document.getElementById("detalleVenta");
-    	  const tr = document.createElement("tr");
+      const tbody = document.getElementById("detalleVenta");
+      const tr = document.createElement("tr");
 
-    	  tr.innerHTML = `
-    	    <td><select class='form-select form-select-sm'>
-    	      <option disabled selected value="">Seleccione un producto</option>
-    	      ${productosCache.map(p => `
-    	        <option value="${p.id}" data-precio="${p.precio}" data-stock="${p.stock}">
-    	          ${p.nombre} - $${p.precio} (stock: ${p.stock})
-    	        </option>`).join('')}
-    	    </select></td>
-    	    <td class='precio'></td>
-    	    <td><input type='number' class='form-control form-control-sm cantidad' min='1' value='1'></td>
-    	    <td class='subtotal'>$0.00</td>
-    	    <td><button class='btn btn-sm btn-danger' onclick='this.closest("tr").remove(); calcularTotal();'>✖</button></td>
-    	  `;
+      tr.innerHTML = `
+        <td class="position-relative">
+          <input type='text' class='form-control form-control-sm productoInput' placeholder='Buscar producto' autocomplete='off'>
+          <ul class='list-group position-absolute sugerenciasProducto' style='z-index: 1000;'></ul>
+          <input type='hidden' class='productoId'>
+        </td>
+        <td class='precio'></td>
+        <td><input type='number' class='form-control form-control-sm cantidad' min='1' value='1'></td>
+        <td class='subtotal'>$0.00</td>
+        <td><button class='btn btn-sm btn-danger' onclick='this.closest("tr").remove(); calcularTotal();'>✖</button></td>
+      `;
 
-    	  tbody.appendChild(tr);
-    	  actualizarFilas();
-    	}
-
+      tbody.appendChild(tr);
+      actualizarFilas();
+    }
 
     function actualizarFilas() {
       document.querySelectorAll("#detalleVenta tr").forEach(tr => {
-        const select = tr.querySelector("select");
+        const input = tr.querySelector(".productoInput");
+        const lista = tr.querySelector(".sugerenciasProducto");
+        const productoIdHidden = tr.querySelector(".productoId");
         const precioCell = tr.querySelector(".precio");
         const cantidadInput = tr.querySelector(".cantidad");
         const subtotalCell = tr.querySelector(".subtotal");
 
-        const actualizar = () => {
-        	  const selected = select.options[select.selectedIndex];
-        	  if (!select.value) {
-        	    precioCell.textContent = '';
-        	    subtotalCell.textContent = '';
-        	    return;
-        	  }
+        input.addEventListener("input", async () => {
+          const nombre = input.value;
+          if (nombre.length < 2) {
+            lista.innerHTML = '';
+            return;
+          }
+          const res = await fetch(`${apiBuscarProductos}?nombre=${nombre}`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          const productos = await res.json();
+          lista.innerHTML = '';
+          productos.forEach(p => {
+            const li = document.createElement("li");
+            li.className = "list-group-item list-group-item-action";
+            li.textContent = `${p.nombre} - $${p.precio} (stock: ${p.stock})`;
+            li.onclick = () => {
+              input.value = p.nombre;
+              productoIdHidden.value = p.id;
+              input.dataset.precio = p.precio;
+              input.dataset.stock = p.stock;
+              precioCell.textContent = `$${p.precio.toFixed(2)}`;
+              lista.innerHTML = '';
+              calcularSubtotal(tr);
+            };
+            lista.appendChild(li);
+          });
+        });
 
-        	  const precio = parseFloat(selected.dataset.precio);
-        	  const stock = parseInt(selected.dataset.stock);
-        	  const cantidad = parseInt(cantidadInput.value);
-
-        	  if (cantidad > stock) {
-        	    alert(`Stock insuficiente. Solo quedan ${stock} unidades.`);
-        	    cantidadInput.value = stock;
-        	  }
-
-        	  precioCell.textContent = `$${precio.toFixed(2)}`;
-        	  subtotalCell.textContent = `$${(precio * cantidadInput.value).toFixed(2)}`;
-        	  calcularTotal();
-        	};
-
-
-        select.onchange = actualizar;
-        cantidadInput.oninput = actualizar;
-        actualizar();
+        cantidadInput.addEventListener("input", () => calcularSubtotal(tr));
       });
+    }
+
+    function calcularSubtotal(tr) {
+      const cantidad = parseInt(tr.querySelector(".cantidad").value);
+      const input = tr.querySelector(".productoInput");
+      const precio = parseFloat(input.dataset.precio || 0);
+      const stock = parseInt(input.dataset.stock || 0);
+      const subtotal = cantidad > stock ? 0 : cantidad * precio;
+      tr.querySelector(".subtotal").textContent = `$${subtotal.toFixed(2)}`;
+      calcularTotal();
     }
 
     function calcularTotal() {
       let total = 0;
       document.querySelectorAll("#detalleVenta tr").forEach(tr => {
-        const select = tr.querySelector("select");
+        const input = tr.querySelector(".productoInput");
         const cantidad = parseInt(tr.querySelector(".cantidad").value);
-        const precio = parseFloat(select.options[select.selectedIndex].dataset.precio);
+        const precio = parseFloat(input.dataset.precio || 0);
         total += precio * cantidad;
       });
       document.getElementById("totalVenta").textContent = total.toFixed(2);
@@ -173,15 +171,16 @@
 
     document.getElementById("formVenta").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const clienteId = document.getElementById("cliente").value;
+      const clienteId = document.getElementById("clienteId").value;
 
       const detalles = [];
       document.querySelectorAll("#detalleVenta tr").forEach(tr => {
-        const select = tr.querySelector("select");
+        const productoId = parseInt(tr.querySelector(".productoId").value);
         const cantidad = parseInt(tr.querySelector(".cantidad").value);
-        const productoId = parseInt(select.value);
-        const precioUnitario = parseFloat(select.options[select.selectedIndex].dataset.precio);
-        detalles.push({ producto: { id: productoId }, cantidad, precioUnitario });
+        const precioUnitario = parseFloat(tr.querySelector(".productoInput").dataset.precio);
+        if (productoId && cantidad && precioUnitario) {
+          detalles.push({ producto: { id: productoId }, cantidad, precioUnitario });
+        }
       });
 
       const total = parseFloat(document.getElementById("totalVenta").textContent);
@@ -204,37 +203,6 @@
       alert("Venta registrada correctamente");
       location.reload();
     });
-
-    async function cargarVentas() {
-      const res = await fetch(apiVentas, {
-        headers: { 'Authorization': 'Bearer ' + token }
-      });
-      const data = await res.json();
-      const tbody = document.getElementById("tablaVentas");
-      tbody.innerHTML = '';
-      data.forEach(v => {
-        const fila = document.createElement("tr");
-        fila.innerHTML = `
-          <td>${v.id}</td>
-          <td>${new Date(v.fecha).toLocaleString()}</td>
-          <td>${v.cliente.nombre}</td>
-          <td>$${v.total.toFixed(2)}</td>
-          <td class="acciones">
-          <button class='btn btn-sm btn-info' onclick="verDetalle(${v.id})">Ver Detalle</button>
-        </td>
-        `;
-        tbody.appendChild(fila);
-      });
-    }
-
-    function verDetalle(id) {
-    	  window.location.href = `verdetalleventa.html?id=${id}`;
-    	}
-
-
-    cargarClientes();
-    cargarProductos();
-    cargarVentas();
   </script>
 </body>
 </html>

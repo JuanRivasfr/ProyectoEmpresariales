@@ -30,4 +30,9 @@ public class ClienteService {
     public void eliminarCliente(Long id) {
         clienteRepository.deleteById(id);
     }
+    
+    public List<Cliente> buscarPorNumeroDocumento(String doc) {
+        return clienteRepository.findByNumeroDocumentoContaining(doc);
+    }
+
 }

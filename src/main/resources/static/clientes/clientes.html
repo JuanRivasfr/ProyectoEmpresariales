@@ -10,14 +10,26 @@
 <h2>Clientes</h2>
 
 <form id="formCliente" class="row g-3 mb-4">
-  <div class="col-md-4">
+  <div class="col-md-3">
     <input type="text" class="form-control" id="nombre" placeholder="Nombre" required>
   </div>
-  <div class="col-md-4">
+  <div class="col-md-3">
     <input type="email" class="form-control" id="correo" placeholder="Correo" required>
   </div>
-  <div class="col-md-4">
+  <div class="col-md-3">
     <input type="text" class="form-control" id="telefono" placeholder="Teléfono" required>
+  </div>
+  <div class="col-md-3">
+    <select class="form-select" id="tipoDocumento" required>
+      <option value="">Tipo de Documento</option>
+      <option value="CC">CC</option>
+      <option value="TI">TI</option>
+      <option value="CE">CE</option>
+      <option value="NIT">NIT</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <input type="text" class="form-control" id="numeroDocumento" placeholder="Número de Documento" maxlength="20" required>
   </div>
   <div class="col-md-12">
     <button type="submit" class="btn btn-primary">Registrar Cliente</button>
@@ -31,6 +43,8 @@
       <th>Nombre</th>
       <th>Correo</th>
       <th>Teléfono</th>
+      <th>Tipo Doc</th>
+      <th>Número Doc</th>
       <th>Acciones</th>
     </tr>
   </thead>
@@ -67,6 +81,8 @@ async function cargarClientes() {
       <td>${cli.nombre}</td>
       <td>${cli.correo}</td>
       <td>${cli.telefono}</td>
+      <td>${cli.tipoDocumento}</td>
+      <td>${cli.numeroDocumento}</td>
       <td>
         ${rol === 'ADMINISTRADOR' ? `<button class='btn btn-sm btn-warning' onclick="editar(${cli.id})">Editar</button>` : ''}
         ${rol === 'ADMINISTRADOR' ? `<button class='btn btn-sm btn-danger' onclick="eliminar(${cli.id})">Eliminar</button>` : ''}
@@ -95,7 +111,9 @@ form.addEventListener("submit", async (e) => {
   const cliente = {
     nombre: form.nombre.value,
     correo: form.correo.value,
-    telefono: form.telefono.value
+    telefono: form.telefono.value,
+    tipoDocumento: form.tipoDocumento.value,
+    numeroDocumento: form.numeroDocumento.value
   };
 
   await fetch(api, {

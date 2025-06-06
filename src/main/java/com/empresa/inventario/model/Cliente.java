@@ -13,18 +13,30 @@ public class Cliente {
     private String nombre;
     private String correo;
     private String telefono;
+    @Column(length = 20, nullable = false)
+    private String tipoDocumento;
+
+    @Column(length = 20, nullable = false)
+    private String numeroDocumento;
+
 
     // Constructor vacio
     public Cliente() {}
 
     // Constructor con parametros
-    public Cliente(String nombre, String correo, String telefono) {
-        this.nombre = nombre;
-        this.correo = correo;
-        this.telefono = telefono;
-    }
 
-    // Getters y setters
+    public Cliente(Long id, String nombre, String correo, String telefono, String tipoDocumento,
+			String numeroDocumento) {
+		super();
+		this.id = id;
+		this.nombre = nombre;
+		this.correo = correo;
+		this.telefono = telefono;
+		this.tipoDocumento = tipoDocumento;
+		this.numeroDocumento = numeroDocumento;
+	}
+
+	// Getters y setters
     public Long getId() {
         return id;
     }
@@ -56,4 +68,22 @@ public class Cliente {
     public void setTelefono(String telefono) {
         this.telefono = telefono;
     }
+
+	public String getTipoDocumento() {
+		return tipoDocumento;
+	}
+
+	public void setTipoDocumento(String tipoDocumento) {
+		this.tipoDocumento = tipoDocumento;
+	}
+
+	public String getNumeroDocumento() {
+		return numeroDocumento;
+	}
+
+	public void setNumeroDocumento(String numeroDocumento) {
+		this.numeroDocumento = numeroDocumento;
+	}
+    
+    
 }

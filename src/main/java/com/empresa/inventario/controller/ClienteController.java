@@ -14,6 +14,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/clientes")
+@CrossOrigin(origins = "http://localhost:3000")
 public class ClienteController {
     @Autowired
     private ClienteService clienteService;
@@ -45,5 +46,12 @@ public class ClienteController {
     	cliente.setId(id);
         return clienteService.guardarCliente(cliente);
     }
+    
+    @GetMapping("/buscar")
+    public ResponseEntity<List<Cliente>> buscarPorDocumento(@RequestParam String documento) {
+        List<Cliente> clientes = clienteService.buscarPorNumeroDocumento(documento);
+        return ResponseEntity.ok(clientes);
+    }
+
 }
 

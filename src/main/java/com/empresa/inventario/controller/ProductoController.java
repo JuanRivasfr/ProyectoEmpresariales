@@ -14,6 +14,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/productos")
+@CrossOrigin(origins = "http://localhost:3000")
 public class ProductoController {
     @Autowired
     private ProductoService productoService;
@@ -45,4 +46,11 @@ public class ProductoController {
     	producto.setId(id);
         return productoService.guardarProducto(producto);
     }
+    
+    @GetMapping("/buscar")
+    public ResponseEntity<List<Producto>> buscarPorNombre(@RequestParam String nombre) {
+        List<Producto> productos = productoService.buscarPorNombre(nombre);
+        return ResponseEntity.ok(productos);
+    }
+
 }
